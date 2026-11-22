@@ -35,6 +35,7 @@ public class MainActivity extends Activity {
         getWindow().setNavigationBarColor(0xff0b0c0f);
         ReminderScheduler.ensureChannel(this);
         ReminderScheduler.rebuild(this);
+        LauncherIconManager.refresh(this);
         webView=new WebView(this);
         webView.setBackgroundColor(0xff0b0c0f);
         WebSettings s=webView.getSettings();
@@ -104,6 +105,7 @@ public class MainActivity extends Activity {
                 JSONObject value=new JSONObject(json);
                 if(!value.has("days")||!value.has("times"))return;
                 getSharedPreferences("haennya-state",MODE_PRIVATE).edit().putString("data",json).apply();
+                LauncherIconManager.updateFromJson(MainActivity.this,json);
             }catch(Exception ignored){}
         }
         @JavascriptInterface public void syncReminders(String json){
@@ -123,6 +125,7 @@ public class MainActivity extends Activity {
     }
     @Override protected void onResume(){
         super.onResume();
+        LauncherIconManager.refresh(this);
         if(!firstResume&&webView!=null&&SystemClock.elapsedRealtime()-lastShown>120000L)loadLatestSite();
         firstResume=false;
     }

@@ -34,6 +34,30 @@ header{display:flex;align-items:center;justify-content:space-between;padding-top
 @media(max-height:720px){.exercise-sheet{height:calc(100dvh - 15px)}.exercise-top{min-height:66px}.exercise-stage{aspect-ratio:10/5.9}.exercise-demo-name{margin-top:10px}.exercise-next{min-height:52px}}
 @media(max-width:365px){.exercise-row{min-height:74px}.exercise-label strong{font-size:21px}.exercise-stage{aspect-ratio:10/6.5}.exercise-demo-name{font-size:29px}}
 @media(prefers-reduced-motion:reduce){.pulse-dot{box-shadow:none}}
+
+/* The existing character stays the same; only small, calm idle movement is added. */
+@keyframes mascotIdle {
+  0%,100% {transform: translateY(0) rotate(-0.5deg)}
+  50% {transform: translateY(-5px) rotate(0.6deg)}
+}
+@keyframes mascotBlink {
+  0%,43%,46%,100% {transform:scaleY(1)}
+  44.4%,45% {transform:scaleY(.09)}
+}
+@keyframes mascotSpark {
+  0% {transform:translateY(0) scale(1)}
+  40% {transform:translateY(-9px) scale(1.04)}
+  100% {transform:translateY(0) scale(1)}
+}
+.character {animation:mascotIdle 3.8s ease-in-out infinite;transform-origin:50% 55%}
+.character .eye, .character .shine {transform-box:fill-box;transform-origin:center;animation:mascotBlink 6.5s ease-in-out infinite}
+.hero.celebrate .character {animation:mascotSpark .75s ease-out 1}
+.hero[data-state="done"] .cheek {opacity:.22}
+@media(prefers-reduced-motion:reduce) {
+  .character, .character .eye, .character .shine,
+  .hero.celebrate .character {animation:none!important}
+}
+
 </style>
 </head>
 <body>
@@ -54,13 +78,13 @@ header{display:flex;align-items:center;justify-content:space-between;padding-top
       <path d="M84 82 Q160 49 237 82" fill="none" stroke="#fff" stroke-opacity=".18" stroke-width="10" stroke-linecap="round"/>
       <g class="brow brow-none"><path d="M103 124 L137 131"/><path d="M183 131 L217 124"/></g>
       <g class="brow brow-partial"><path d="M103 120 L137 131"/><path d="M183 123 L217 123"/></g>
-      <g class="brow brow-done"><path d="M105 129 Q123 118 138 129"/><path d="M182 129 Q199 118 215 129"/></g>
+      <g class="brow brow-done"><path d="M104 128 Q122 121 138 128"/><path d="M182 128 Q198 121 216 128"/></g>
       <ellipse class="eye" cx="123" cy="157" rx="12" ry="16"/>
       <ellipse class="eye" cx="198" cy="157" rx="12" ry="16"/>
       <circle class="shine" cx="126" cy="152" r="3"/><circle class="shine" cx="201" cy="152" r="3"/>
       <path class="mouth mouth-none" d="M136 210 L184 210"/>
       <path class="mouth mouth-partial" d="M137 212 Q159 202 182 214"/>
-      <path class="mouth mouth-done" d="M119 197 Q160 252 202 197"/>
+      <path class="mouth mouth-done" d="M129 206 Q160 223 191 206"/>
       <ellipse class="cheek" cx="89" cy="189" rx="15" ry="7" opacity=".3"/><ellipse class="cheek" cx="231" cy="189" rx="15" ry="7" opacity=".3"/>
     </svg>
     <p class="status" id="status">아직 안 했어.</p>
@@ -163,7 +187,12 @@ for(let i=0;i<start;i++)html+='<div class="day blank"></div>';
 for(let d=1;d<=end;d++){const k=dateKey(new Date(year,month,d,12)),n=clamp(state.days[k]);let klass=`day ${n===3?'done':n>0?'partial':''} ${k===dateKey()?'today':''} ${k>dateKey()?'future':''}`;html+=`<div class="${klass.trim()}" title="${k}: ${n}세트" aria-label="${year}년 ${month+1}월 ${d}일, ${n}세트">${d}</div>`;}
 $('days').innerHTML=html;}
 function render(){renderHero();renderCalendar();$('bell').classList.toggle('is-on',state.notify);$('notifSwitch').classList.toggle('on',state.notify);$('notifSwitch').setAttribute('aria-checked',String(state.notify));state.times.forEach((v,i)=>$('time'+(i+1)).value=v);$('platformNotice').textContent=window.AndroidBridge?'앱을 꺼도 알림을 예약해. 3세트를 완료하면 그날은 조용해져.':'웹 체험판은 열려 있을 때만 알림을 보낼 수 있어. 앱 종료 후에도 독촉하려면 Android 설치 앱이 필요해.';}
-function choose(n){n=clamp(n);const old=count();const next=old===n?n-1:n;if(next>0)state.days[dateKey()]=next;else delete state.days[dateKey()];save();render();if(next===3&&old!==3)toast('오늘 운동 완료!');}
+function choose(n){n=clamp(n);const old=count();const next=old===n?n-1:n;if(next>0)state.days[dateKey()]=next;else delete state.days[dateKey()];save();render();if(next===3&&old!==3){
+  const hero=$('hero');hero.classList.remove('celebrate');void hero.offsetWidth;
+  hero.classList.add('celebrate');
+  setTimeout(()=>hero.classList.remove('celebrate'),780);
+  toast('오늘 운동 완료!');
+}}
 function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),2500);}
 function syncNative(){if(!window.AndroidBridge?.syncReminders)return;try{window.AndroidBridge.syncReminders(JSON.stringify({enabled:state.notify,slots:state.times,nag:'spicy',completedDate:count()===3?dateKey():'',countDate:dateKey(),doneCount:count(),restDate:''}));}catch(e){}}
 function openSettings(open){$('overlay').classList.toggle('open',open);document.body.style.overflow=open?'hidden':'';if(open)$('close').focus();else $('bell').focus();}
@@ -180,7 +209,7 @@ $('testNotif').addEventListener('click',async()=>{if(window.AndroidBridge?.showT
 window.addEventListener('focus',()=>{const n=new Date();if(dateKey()!==today){showing=n.getFullYear()*12+n.getMonth()}render();webTick()});
 render();save();setInterval(webTick,30000);
 // Hosted pages can refresh in place without a fresh APK installation.
-const SITE_BUILD='2026.11.23.2';let lastUpdateCheck=0;
+const SITE_BUILD='2026.11.23.4';let lastUpdateCheck=0;
 async function checkForSiteUpdate(){
  if(location.protocol!=='https:' || !navigator.onLine || document.hidden)return;
  if(Date.now()-lastUpdateCheck<60000)return;
@@ -203,11 +232,11 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)checkForSi
 /* Self-contained, resolution-independent animated exercise coach. No network or video needed. */
 (()=>{'use strict';
 const workouts=[
- {key:'squat',name:'스쿼트',reps:'30회',tip:'엉덩이를 뒤로 빼고 일어나기'},
- {key:'pushup',name:'푸시업',reps:'20회',tip:'몸을 일직선으로, 가슴 내리기'},
- {key:'climber',name:'마운틴 클라이머',reps:'40회',tip:'무릎을 가슴 쪽으로 번갈아 당기기'},
- {key:'legraise',name:'레그 레이즈',reps:'25회',tip:'허리를 뜨지 않게, 두 다리 올리기'},
- {key:'plank',name:'플랭크',reps:'1분',tip:'팔꿈치로 버티고 몸 일직선 유지'}
+ {key:'squat',name:'스쿼트',reps:'30회',tip:'엉덩이를 뒤로 빼고 무릎은 발끝 방향'},
+ {key:'pushup',name:'푸시업',reps:'20회',tip:'배에 힘 주고 가슴만 가볍게 내리기'},
+ {key:'climber',name:'마운틴 클라이머',reps:'40회',tip:'허리 고정, 무릎만 번갈아 끌어오기'},
+ {key:'legraise',name:'레그 레이즈',reps:'25회',tip:'허리 붙이고 다리를 45도 이상까지만'},
+ {key:'plank',name:'플랭크',reps:'1분',tip:'엉덩이 들지 않게 몸 1자 유지'}
 ];
 const $=id=>document.getElementById(id);
 const overlay=$('exerciseOverlay'), list=$('exerciseList'),detail=$('exerciseDetail'), back=$('exerciseBack'),canvas=$('exerciseCanvas'),ctx=canvas.getContext('2d');
@@ -260,15 +289,14 @@ function drawFigure(p,mode){
 }
 function drawArrows(mode){
  ctx.save();ctx.strokeStyle='rgba(255,102,114,.73)';ctx.lineWidth=3;ctx.lineCap='round';ctx.lineJoin='round';
- // A spare motion cue, deliberately not dense with labels.
  if(mode==='squat'){
-  ctx.beginPath();ctx.arc(280,147,30,-.9,.8);ctx.stroke();ctx.beginPath();ctx.moveTo(297,165);ctx.lineTo(302,172);ctx.lineTo(309,163);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(282,122);ctx.lineTo(282,166);ctx.moveTo(274,156);ctx.lineTo(282,166);ctx.lineTo(290,156);ctx.stroke();
  }else if(mode==='legraise'){
-  ctx.beginPath();ctx.arc(277,116,29,-1.6,.4);ctx.stroke();ctx.beginPath();ctx.moveTo(304,122);ctx.lineTo(303,131);ctx.lineTo(313,126);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(270,170);ctx.lineTo(300,132);ctx.moveTo(289,134);ctx.lineTo(300,132);ctx.lineTo(299,143);ctx.stroke();
  }else if(mode==='climber'){
-  ctx.beginPath();ctx.moveTo(260,229);ctx.lineTo(235,207);ctx.lineTo(241,209);ctx.moveTo(235,207);ctx.lineTo(238,217);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(253,224);ctx.lineTo(231,206);ctx.moveTo(241,206);ctx.lineTo(231,206);ctx.lineTo(233,216);ctx.stroke();
  }else if(mode==='pushup'){
-  ctx.beginPath();ctx.moveTo(75,177);ctx.lineTo(75,211);ctx.moveTo(69,204);ctx.lineTo(75,211);ctx.lineTo(81,204);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(84,176);ctx.lineTo(84,205);ctx.moveTo(78,196);ctx.lineTo(84,205);ctx.lineTo(90,196);ctx.stroke();
  }
  ctx.restore();
 }
@@ -280,17 +308,19 @@ const A={
  plank:{head:v(101,161),shoulder:v(143,177),hip:v(229,177),knee:v(289,199),ankle:v(335,237),elbow:v(140,217),wrist:v(185,236)}
 };
 const B={
- squat:{head:v(141,100),shoulder:v(149,128),hip:v(135,186),knee:v(193,201),ankle:v(191,237),elbow:v(194,143),wrist:v(211,151)},
- pushup:{head:v(100,202),shoulder:v(141,214),hip:v(225,204),knee:v(286,220),ankle:v(328,236),elbow:v(129,226),wrist:v(153,237)},
- climber:{head:v(101,153),shoulder:v(140,170),hip:v(225,178),knee:v(275,198),ankle:v(334,237),backKnee:v(188,213),backAnkle:v(217,239),elbow:v(146,207),wrist:v(151,238)},
- legraise:{head:v(63,215),shoulder:v(100,215),hip:v(178,210),knee:v(179,136),ankle:v(170,63),elbow:v(117,225),wrist:v(149,235)},
- plank:{head:v(100,162),shoulder:v(143,174),hip:v(229,175),knee:v(289,197),ankle:v(335,237),elbow:v(140,217),wrist:v(185,236)}
+ squat:{head:v(150,86),shoulder:v(158,114),hip:v(151,176),knee:v(191,204),ankle:v(191,237),elbow:v(203,132),wrist:v(214,147)},
+ pushup:{head:v(100,183),shoulder:v(142,193),hip:v(225,192),knee:v(284,214),ankle:v(328,236),elbow:v(135,220),wrist:v(153,237)},
+ climber:{head:v(101,153),shoulder:v(140,170),hip:v(225,178),knee:v(252,204),ankle:v(304,236),backKnee:v(196,210),backAnkle:v(226,239),elbow:v(146,207),wrist:v(151,238)},
+ legraise:{head:v(63,215),shoulder:v(100,215),hip:v(178,210),knee:v(208,160),ankle:v(229,105),elbow:v(117,225),wrist:v(149,235)},
+ plank:{head:v(100,161),shoulder:v(143,176),hip:v(229,176),knee:v(289,198),ankle:v(335,237),elbow:v(140,217),wrist:v(185,236)}
 };
 function drawFrame(time){
  if(selected<0||!ctx)return;
  const mode=workouts[selected].key;
- let t=reduce? .45 : (1-Math.cos((time-started)*(mode==='climber'?.0045:mode==='plank'?.0014:.0027)))/2;
- if(mode==='plank')t=t*.6;
+ const raw=reduce? .48 : (1-Math.cos((time-started)*(mode==='climber'?.0033:mode==='plank'?.0012:.0021)))/2;
+ const ranges={squat:[.18,.62],pushup:[.2,.58],climber:[.24,.76],legraise:[.12,.58],plank:[.38,.46]};
+ const [lo,hi]=ranges[mode]||[.2,.6];
+ const t=lo+(hi-lo)*raw;
  let p=pose(A[mode],B[mode],t);
  ctx.setTransform(3,0,0,3,0,0);ctx.clearRect(0,0,400,280);
  const grad=ctx.createRadialGradient(210,120,15,210,130,200);grad.addColorStop(0,'#1b1b27');grad.addColorStop(1,'#10121a');ctx.fillStyle=grad;ctx.fillRect(0,0,400,280);

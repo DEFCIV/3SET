@@ -19,3 +19,12 @@ Update web files and bump the same build/version tag in `docs/index.html`, `docs
 ## Safety
 
 Private workout history stays on-device. The web display uses a fixed origin rather than permitting arbitrary web navigation. Android notifications require user permission and can be delayed by battery-saving rules.
+
+
+## Animated character & home icon (3.1.0)
+
+- A gentle floating idle animation and blink are added to the web mascot. The green completed face is a restrained small smile; previous workout animation exaggerations are reduced.
+- Native Android launcher uses two activity aliases: red neutral by default and green smiling only when today's count is exactly 3. Unchecking a set returns the neutral icon.
+- An inexact midnight AlarmManager event, app resume, device boot and time change keep the icon current; Android power saving may delay the scheduled change. Galaxy launcher caches/placement may vary.
+- Launcher icon switching is a native change, therefore this version requires a newly built APK. Future character movement and guide adjustments can be delivered via web when Pages is enabled.
+- Debug APKs from distinct GitHub Actions runners may have different signing keys. Backup workout history before replacing an already installed debug build; never promise a seamless in-place update until signing has been stabilized.
