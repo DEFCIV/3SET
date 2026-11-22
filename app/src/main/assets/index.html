@@ -58,6 +58,29 @@ header{display:flex;align-items:center;justify-content:space-between;padding-top
   .hero.celebrate .character {animation:none!important}
 }
 
+
+/* Editable calendar days, with a separate save/cancel sheet. */
+.days .day:not(.blank){border:0;padding:0;width:100%;font:inherit;cursor:pointer;background:transparent}
+.days .day:not(.blank).partial{background:rgba(248,198,75,.16)}
+.days .day:not(.blank).done{background:var(--green)}
+.days .day:not(.blank).today:not(.done):not(.partial){background:rgba(255,88,98,.13)}
+.days .day:disabled{cursor:default}
+.days .day:focus-visible{outline:2px solid #fff;outline-offset:2px}
+.calendar-hint{text-align:center;color:#989aa4;font-size:14px;font-weight:650;margin:14px 0 0}
+.day-edit-overlay{position:fixed;inset:0;z-index:65;background:rgba(0,0,0,.76);display:none;align-items:flex-end;justify-content:center;padding:12px}
+.day-edit-overlay.open{display:flex}
+.day-edit-sheet{background:#1a1b21;border:1px solid #37383e;border-radius:28px;width:min(100%,500px);padding:24px 20px max(25px,env(safe-area-inset-bottom));box-shadow:0 12px 80px #000b}
+.day-edit-head{display:flex;justify-content:space-between;gap:10px;align-items:center}
+.day-edit-title{font-size:25px;font-weight:900;letter-spacing:-.8px;margin:0}
+.day-edit-help{color:#a7a9b2;font-weight:650;font-size:16px;margin:12px 0 22px}
+.day-edit-options{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.day-edit-option{min-width:0;height:69px;border-radius:15px;border:2px solid #393b44;background:#24262d;color:#d2d3db;font-size:17px;font-weight:850}
+.day-edit-option.chosen{border-color:var(--green);background:rgba(72,220,136,.13);color:var(--green)}
+.day-edit-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:22px}
+.day-edit-actions button{min-height:55px;border-radius:15px;border:0;font-size:18px;font-weight:850}
+.day-edit-cancel{background:#313239;color:#fff}
+.day-edit-save{background:#f5f5f6;color:#14151a}
+
 </style>
 </head>
 <body>
@@ -108,9 +131,30 @@ header{display:flex;align-items:center;justify-content:space-between;padding-top
     <div class="weekdays" aria-hidden="true"><div>일</div><div>월</div><div>화</div><div>수</div><div>목</div><div>금</div><div>토</div></div>
     <div class="days" id="days"></div>
     <div class="legend"><span><i class="dot"></i> 3세트 완료</span><span><i class="dot partial"></i> 덜 완료</span></div>
+    <p class="calendar-hint">날짜를 누르면 그날의 기록을 수정할 수 있어.</p>
   </section>
 </main>
 </div>
+<div class="day-edit-overlay" id="dayEditOverlay" aria-hidden="true">
+  <section class="day-edit-sheet" role="dialog" aria-modal="true" aria-labelledby="dayEditTitle" aria-describedby="dayEditHelp">
+    <div class="day-edit-head">
+      <h2 class="day-edit-title" id="dayEditTitle">날짜별 운동 기록</h2>
+      <button class="close" type="button" id="dayEditClose" aria-label="기록 수정 닫기">×</button>
+    </div>
+    <p class="day-edit-help" id="dayEditHelp">이 날짜에 완료한 세트를 선택해 줘.</p>
+    <div class="day-edit-options" id="dayEditOptions" role="group" aria-label="완료 세트 수">
+      <button type="button" class="day-edit-option" data-edit-count="0" aria-pressed="false">0세트</button>
+      <button type="button" class="day-edit-option" data-edit-count="1" aria-pressed="false">1세트</button>
+      <button type="button" class="day-edit-option" data-edit-count="2" aria-pressed="false">2세트</button>
+      <button type="button" class="day-edit-option" data-edit-count="3" aria-pressed="false">3세트</button>
+    </div>
+    <div class="day-edit-actions">
+      <button type="button" class="day-edit-cancel" id="dayEditCancel">취소</button>
+      <button type="button" class="day-edit-save" id="dayEditSave">저장</button>
+    </div>
+  </section>
+</div>
+
 <div class="overlay" id="overlay" role="presentation">
  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
   <div class="sheet-top"><h2 id="sheetTitle">독촉 알림 🔔</h2><button class="close" id="close" aria-label="닫기">×</button></div>
@@ -181,7 +225,7 @@ $('monthText').textContent=year===now.getFullYear()?`${month+1}월`:`${year}년 
 $('next').disabled=showing>=now.getFullYear()*12+now.getMonth();
 const start=new Date(year,month,1).getDay(),end=new Date(year,month+1,0).getDate();let html='';
 for(let i=0;i<start;i++)html+='<div class="day blank"></div>';
-for(let d=1;d<=end;d++){const k=dateKey(new Date(year,month,d,12)),n=clamp(state.days[k]);let klass=`day ${n===3?'done':n>0?'partial':''} ${k===dateKey()?'today':''} ${k>dateKey()?'future':''}`;html+=`<div class="${klass.trim()}" title="${k}: ${n}세트" aria-label="${year}년 ${month+1}월 ${d}일, ${n}세트">${d}</div>`;}
+for(let d=1;d<=end;d++){const k=dateKey(new Date(year,month,d,12)),n=clamp(state.days[k]);let klass=`day ${n===3?'done':n>0?'partial':''} ${k===dateKey()?'today':''} ${k>dateKey()?'future':''}`;const future=k>dateKey();html+=`<button type="button" class="${klass.trim()}" data-date="${k}" ${future?'disabled':''} title="${k}: ${n}세트" aria-label="${year}년 ${month+1}월 ${d}일, ${n}세트${future?', 미래 날짜':' - 기록 수정'}">${d}</button>`;}
 $('days').innerHTML=html;}
 function render(){renderHero();renderCalendar();$('bell').classList.toggle('is-on',state.notify);$('notifSwitch').classList.toggle('on',state.notify);$('notifSwitch').setAttribute('aria-checked',String(state.notify));state.times.forEach((v,i)=>$('time'+(i+1)).value=v);$('platformNotice').textContent=window.AndroidBridge?'앱을 꺼도 알림을 예약해. 3세트를 완료하면 그날은 조용해져.':'웹 체험판은 열려 있을 때만 알림을 보낼 수 있어. 앱 종료 후에도 독촉하려면 Android 설치 앱이 필요해.';}
 function choose(n){n=clamp(n);const old=count();const next=old===n?n-1:n;if(next>0)state.days[dateKey()]=next;else delete state.days[dateKey()];save();render();if(next===3&&old!==3){
@@ -197,6 +241,62 @@ async function toggleNotify(){state.notify=!state.notify;if(state.notify&&window
 const messages=['했냐? 아직 3세트 남았다.','했냐? 아직도 미완료야.','했냐? 오늘 끝내고 자자.'];
 function sendWebNotification(index){if(!state.notify||count()===3||window.AndroidBridge)return;if(!('Notification' in window)||!window.isSecureContext||Notification.permission!=='granted')return;try{new Notification('3SET',{body:messages[index]||messages[0],tag:'haennya-'+dateKey()+'-'+index});}catch(e){}}
 function webTick(){if(window.AndroidBridge||!state.notify||count()===3)return;const now=new Date(),hhmm=`${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;state.times.forEach((time,i)=>{let key='haennya-last-'+dateKey()+'-'+i;if(time===hhmm&&localStorage.getItem('haennya-last-notify')!==key){localStorage.setItem('haennya-last-notify',key);sendWebNotification(i);}});}
+
+let editingDate=null,editedSets=0;
+function showEditedSelection(){
+ document.querySelectorAll('[data-edit-count]').forEach(btn=>{
+  const active=Number(btn.dataset.editCount)===editedSets;
+  btn.classList.toggle('chosen',active);btn.setAttribute('aria-pressed',String(active));
+ });
+}
+function openDayEditor(key){
+ if(!/^\d{4}-\d{2}-\d{2}$/.test(key)||key>dateKey())return;
+ const [year,month,day]=key.split('-').map(Number);
+ if(dateKey(new Date(year,month-1,day,12))!==key)return;
+ editingDate=key;editedSets=clamp(state.days[key]);
+ $('dayEditTitle').textContent=`${year}년 ${month}월 ${day}일`;
+ $('dayEditOverlay').classList.add('open');
+ $('dayEditOverlay').setAttribute('aria-hidden','false');
+ document.body.style.overflow='hidden';
+ showEditedSelection();
+ document.querySelector(`[data-edit-count="${editedSets}"]`)?.focus();
+}
+function closeDayEditor(){
+ const previousDate=editingDate;
+ editingDate=null;
+ $('dayEditOverlay').classList.remove('open');
+ $('dayEditOverlay').setAttribute('aria-hidden','true');
+ document.body.style.overflow='';
+ if(previousDate)document.querySelector(`#days [data-date="${previousDate}"]`)?.focus();
+}
+function saveDayEdit(){
+ if(!editingDate||editingDate>dateKey())return;
+ const key=editingDate,old=clamp(state.days[key]);
+ if(editedSets===0)delete state.days[key];else state.days[key]=editedSets;
+ closeDayEditor();
+ if(old!==editedSets){
+  save();render();
+  toast(`${Number(key.slice(5,7))}월 ${Number(key.slice(8,10))}일 기록 저장했어`);
+ }else toast('변경 없이 닫았어');
+}
+$('days').addEventListener('click',e=>{
+ const btn=e.target.closest('button[data-date]');
+ if(btn&&!btn.disabled)openDayEditor(btn.dataset.date);
+});
+$('dayEditOptions').addEventListener('click',e=>{
+ const btn=e.target.closest('button[data-edit-count]');
+ if(!btn||!editingDate)return;
+ editedSets=clamp(btn.dataset.editCount);showEditedSelection();
+});
+$('dayEditClose').addEventListener('click',closeDayEditor);
+$('dayEditCancel').addEventListener('click',closeDayEditor);
+$('dayEditSave').addEventListener('click',saveDayEdit);
+$('dayEditOverlay').addEventListener('click',e=>{if(e.target===$('dayEditOverlay'))closeDayEditor()});
+document.addEventListener('keydown',e=>{
+ if(!$('dayEditOverlay').classList.contains('open'))return;
+ if(e.key==='Escape'){e.preventDefault();closeDayEditor();}
+});
+
 $('sets').addEventListener('click',e=>{const btn=e.target.closest('[data-set]');if(btn)choose(btn.dataset.set)});
 $('prev').addEventListener('click',()=>{showing--;renderCalendar();});$('next').addEventListener('click',()=>{const n=new Date();showing=Math.min(showing+1,n.getFullYear()*12+n.getMonth());renderCalendar();});
 $('bell').addEventListener('click',()=>openSettings(true));$('close').addEventListener('click',()=>openSettings(false));$('overlay').addEventListener('click',e=>{if(e.target===$('overlay'))openSettings(false)});document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('overlay').classList.contains('open'))openSettings(false)});
@@ -206,7 +306,7 @@ $('testNotif').addEventListener('click',async()=>{if(window.AndroidBridge?.showT
 window.addEventListener('focus',()=>{const n=new Date();if(dateKey()!==today){showing=n.getFullYear()*12+n.getMonth()}render();webTick()});
 render();save();setInterval(webTick,30000);
 // Hosted pages can refresh in place without a fresh APK installation.
-const SITE_BUILD='2026.11.23.6';let lastUpdateCheck=0;
+const SITE_BUILD='2026.11.23.7';let lastUpdateCheck=0;
 async function checkForSiteUpdate(){
  if(location.protocol!=='https:' || !navigator.onLine || document.hidden)return;
  if(Date.now()-lastUpdateCheck<60000)return;
