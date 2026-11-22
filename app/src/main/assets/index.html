@@ -1,0 +1,318 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0C0D10">
+<meta name="description" content="오늘 3세트 했냐? 캐릭터와 달력으로 확인하는 초간단 운동 체크.">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" type="image/svg+xml" href="./icon.svg">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' data: blob:; img-src 'self' data:; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self'; object-src 'none'; frame-src 'none'; base-uri 'self'; form-action 'none'">
+<title>3SET</title>
+<style>
+:root{color-scheme:dark;--bg:#0c0d10;--ink:#f7f7f6;--muted:#9b9ca5;--card:#17181d;--line:#2c2d32;--red:#ff5862;--yellow:#f8c64b;--green:#48dc88;--accent:var(--red);--accent-rgb:255,88,98;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Noto Sans KR","Apple SD Gothic Neo",sans-serif;}
+*{box-sizing:border-box}html{background:var(--bg)}body{margin:0;min-height:100vh;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased}button,input{font:inherit}button{cursor:pointer;-webkit-tap-highlight-color:transparent}button:focus-visible,input:focus-visible{outline:3px solid white;outline-offset:4px}button:active{transform:scale(.98)}.app{max-width:510px;margin:0 auto;min-height:100vh;padding:env(safe-area-inset-top) 24px max(48px,env(safe-area-inset-bottom))}
+header{display:flex;align-items:center;justify-content:space-between;padding-top:24px}h1{font-size:34px;line-height:1.15;font-weight:900;letter-spacing:-1.6px;margin:0}.bell{display:grid;place-items:center;background:#1b1c20;color:var(--ink);width:54px;height:54px;border:1px solid #323339;border-radius:17px;position:relative}.bell svg{width:25px;height:25px}.bell.is-on::after{content:"";position:absolute;right:11px;top:10px;width:8px;height:8px;border-radius:50%;background:var(--green);border:2px solid var(--card)}
+.hero{text-align:center;min-height:335px;padding:12px 0 6px;display:flex;align-items:center;justify-content:center;flex-direction:column}.character{width:min(74vw,300px);max-width:300px;height:auto;display:block;filter:drop-shadow(0 18px 39px rgba(var(--accent-rgb),.12));transition:filter .25s ease}.halo{fill:rgba(var(--accent-rgb),.11)}.aura{stroke:rgba(var(--accent-rgb),.22)}.face{fill:var(--accent);transition:fill .23s ease}.brow{stroke:#111316;stroke-width:10;stroke-linecap:round;fill:none}.eye{fill:#121417}.shine{fill:rgba(255,255,255,.5)}.mouth{stroke:#111316;stroke-width:11;stroke-linecap:round;fill:none}.status{font-weight:900;letter-spacing:-1.4px;font-size:clamp(30px,7.6vw,39px);line-height:1.15;margin:0 0 4px}.subtitle{color:var(--muted);font-size:18px;font-weight:650;margin:0}.hero[data-state="partial"]{--accent:var(--yellow);--accent-rgb:248,198,75}.hero[data-state="done"]{--accent:var(--green);--accent-rgb:72,220,136}.hero[data-state="none"] .mouth-partial,.hero[data-state="none"] .mouth-done,.hero[data-state="none"] .brow-partial,.hero[data-state="none"] .brow-done{display:none}.hero[data-state="partial"] .mouth-none,.hero[data-state="partial"] .mouth-done,.hero[data-state="partial"] .brow-none,.hero[data-state="partial"] .brow-done{display:none}.hero[data-state="done"] .mouth-none,.hero[data-state="done"] .mouth-partial,.hero[data-state="done"] .brow-none,.hero[data-state="done"] .brow-partial{display:none}.hero[data-state="done"] .cheek{opacity:1}.cheek{fill:#fffbdd;opacity:0;transition:opacity .2s}
+.check{margin-top:12px} .section-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:16px}.section-head h2{font-size:24px;font-weight:850;letter-spacing:-.85px;margin:0}.count{font-size:32px;font-weight:900;line-height:1;letter-spacing:-1px;font-variant-numeric:tabular-nums}.count span{font-size:23px;color:#7d7e88}.set-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.set-btn{height:76px;border-radius:20px;background:#1b1c21;border:2px solid #33343c;color:#b6b6bf;font-size:20px;font-weight:850;letter-spacing:-.55px;display:flex;align-items:center;justify-content:center;gap:5px;transition:background .2s ease,border-color .2s ease,color .2s ease}.set-btn.chosen{background:rgba(var(--accent-rgb),.15);border-color:var(--accent);color:var(--accent)}.set-btn .checkmark{display:none;font-size:21px}.set-btn.chosen .checkmark{display:inline}.check[data-state="partial"]{--accent:var(--yellow);--accent-rgb:248,198,75}.check[data-state="done"]{--accent:var(--green);--accent-rgb:72,220,136}.check[data-state="none"]{--accent:var(--red);--accent-rgb:255,88,98}
+.calendar-card{margin-top:32px;padding:22px 16px 19px;background:var(--card);border-radius:26px;border:1px solid #26272d}.calendar-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;padding:0 2px}.calendar-head h2{margin:0;font-size:24px;font-weight:850;letter-spacing:-.6px}.month-controls{display:flex;align-items:center;gap:10px}.month-controls span{font-size:18px;font-weight:800;min-width:88px;text-align:center;letter-spacing:-.5px}.month-btn{width:35px;height:38px;border:none;border-radius:10px;background:#292a30;color:white;display:grid;place-items:center}.month-btn:disabled{opacity:.25;cursor:default}.month-btn svg{width:20px;height:20px}.weekdays,.days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px}.weekdays{margin-bottom:7px}.weekdays div{height:27px;display:grid;place-items:center;color:#a6a6ae;font-size:16px;font-weight:650}.days .day{border-radius:13px;aspect-ratio:1/1;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:750;color:#b9bbc4;position:relative;overflow:hidden}.day.blank{visibility:hidden}.day.future{color:#62636b}.day.today{box-shadow:inset 0 0 0 2px #dedee4;color:white}.day.partial{background:rgba(248,198,75,.16);color:var(--yellow)}.day.done{background:var(--green);color:#0c1710;font-weight:900}.day.today.done{box-shadow:inset 0 0 0 2px #fff}.day.today.partial{box-shadow:inset 0 0 0 2px var(--yellow)}.day.today:not(.done):not(.partial){background:rgba(255,88,98,.13);box-shadow:inset 0 0 0 2px var(--red);color:var(--red)}.legend{display:flex;align-items:center;justify-content:center;gap:22px;font-size:16px;font-weight:650;color:#b9bbc3;margin-top:17px}.legend span{display:flex;align-items:center;gap:7px}.dot{width:11px;height:11px;border-radius:4px;background:var(--green)}.dot.partial{background:var(--yellow)}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;align-items:flex-end;justify-content:center;z-index:50;padding:12px}.overlay.open{display:flex}.sheet{background:#1a1b21;border:1px solid #37383d;border-radius:28px 28px 24px 24px;width:min(100%,500px);padding:24px 22px max(28px,env(safe-area-inset-bottom));box-shadow:0 10px 80px #000}.sheet-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:26px}.sheet h2{margin:0;font-size:27px;font-weight:900;letter-spacing:-1px}.close{background:#303138;color:#fff;border:0;width:44px;height:44px;border-radius:14px;font-size:26px}.switch-line{display:flex;align-items:center;justify-content:space-between;gap:15px;font-size:22px;font-weight:800;margin:20px 0 18px}.switch{width:70px;height:43px;background:#45464d;border:0;border-radius:30px;position:relative;flex-shrink:0}.switch::before{content:"";position:absolute;width:33px;height:33px;top:5px;left:5px;background:white;border-radius:50%;transition:transform .2s}.switch.on{background:var(--green)}.switch.on::before{transform:translateX(27px)}.time-row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:16px 0 20px}.time-row label{display:block;color:#a5a5b0;margin-bottom:8px;font-size:16px;font-weight:700}.time-row input{width:100%;height:52px;padding:7px 6px;font-size:18px;font-weight:750;text-align:center;border:1px solid #44454c;border-radius:13px;color:#fff;background:#26272e;color-scheme:dark}.big-btn{border:0;background:#fff;color:#141416;border-radius:16px;padding:16px;width:100%;font-weight:850;font-size:20px}.notice{margin-top:18px;line-height:1.5;color:#a7a8b1;font-size:16px;font-weight:550}.toast{position:fixed;bottom:32px;left:50%;transform:translate(-50%,25px);background:#292b31;color:#fff;padding:14px 20px;border-radius:16px;opacity:0;pointer-events:none;transition:.2s;min-width:180px;text-align:center;font-size:17px;font-weight:700;z-index:100;box-shadow:0 7px 25px #000a}.toast.show{opacity:1;transform:translate(-50%,0)}
+@media(min-width:600px){.app{padding-top:12px}.hero{min-height:375px}}@media(max-width:370px){.app{padding-left:16px;padding-right:16px}.calendar-card{padding-left:10px;padding-right:10px}.calendar-head h2{font-size:22px}.month-controls{gap:3px}.month-controls span{min-width:78px;font-size:17px}.set-btn{font-size:18px}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important}}
+
+/* Exercise guide: optional, never crowds the minimal home screen. */
+.exercise-entry{width:100%;display:flex;align-items:center;justify-content:space-between;margin-top:14px;min-height:57px;padding:12px 18px;background:transparent;border:1px solid #34353b;border-radius:17px;color:#f0f0f2;font-size:19px;font-weight:800;letter-spacing:-.45px}
+.exercise-entry .entry-end{display:flex;align-items:center;gap:10px;color:#a3a4ae;font-size:17px;font-weight:700}.exercise-entry svg{width:22px;height:22px}
+.exercise-overlay{position:fixed;inset:0;z-index:70;background:rgba(0,0,0,.83);display:none;align-items:flex-end;justify-content:center}.exercise-overlay.open{display:flex}
+.exercise-sheet{background:#17181d;border:1px solid #32343c;border-bottom:0;border-radius:27px 27px 0 0;width:min(100%,510px);height:min(738px,calc(100dvh - 30px));display:flex;flex-direction:column;overflow:hidden;box-shadow:0 0 70px #000a;padding-bottom:env(safe-area-inset-bottom)}
+.exercise-top{display:flex;align-items:center;justify-content:space-between;min-height:83px;padding:17px 19px 10px 22px;gap:10px}
+.exercise-title{font-size:29px;font-weight:900;letter-spacing:-1.2px;margin:0;line-height:1.17}.exercise-back{border:0;background:#2a2c33;color:#fff;border-radius:13px;width:43px;height:43px;display:none;place-items:center;flex-shrink:0}.exercise-back.visible{display:grid}.exercise-back svg{width:24px;height:24px}
+.exercise-close{border:0;background:#2b2d34;color:#fff;width:43px;height:43px;border-radius:13px;font-size:29px;display:grid;place-items:center;flex-shrink:0}.exercise-list{padding:8px 20px 24px;overflow:auto;flex:1}.exercise-row{border:1px solid #34353e;background:#202127;width:100%;min-height:87px;border-radius:18px;display:flex;align-items:center;gap:16px;text-align:left;padding:13px 17px;margin:0 0 10px;color:white}.exercise-num{font-weight:900;font-size:26px;color:#fb6269;width:28px;flex-shrink:0}.exercise-label{flex:1;display:flex;flex-direction:column;gap:4px}.exercise-label strong{font-weight:850;font-size:23px;letter-spacing:-.8px}.exercise-label em{font-style:normal;font-size:17px;color:#bfc0c8;font-weight:700}.exercise-chevron{font-size:30px;color:#a2a2ad;font-weight:350}
+.exercise-detail{padding:0 18px 22px;display:none;flex:1;min-height:0;flex-direction:column}.exercise-detail.visible{display:flex}
+.exercise-counter{font-size:18px;font-weight:750;color:#a8a9b0;margin:1px 0 12px 3px}.exercise-stage{position:relative;background:#0d1017;border:1px solid #292c36;border-radius:23px;overflow:hidden;flex:none;aspect-ratio:10/7;display:grid;place-items:center}.exercise-stage canvas{width:100%;height:100%;display:block}.exercise-animation-tag{position:absolute;left:15px;top:13px;display:flex;align-items:center;gap:7px;background:#252831d9;border-radius:9px;padding:6px 10px;color:#e0e2e7;font-weight:750;font-size:14px}.pulse-dot{width:7px;height:7px;background:#ff5c66;border-radius:50%;box-shadow:0 0 0 3px #ff5c6623}
+.exercise-demo-name{margin:19px 4px 2px;font-size:32px;line-height:1.2;font-weight:900;letter-spacing:-1.2px}.exercise-demo-reps{font-size:24px;font-weight:850;color:#ff626d;margin:0 4px 8px}.exercise-tip{margin:0 4px;color:#c0c1c8;font-size:18px;font-weight:650;line-height:1.45}.exercise-next{margin-top:auto;min-height:60px;border:0;border-radius:17px;background:#f3f3f5;color:#141419;font-weight:900;font-size:20px}
+@media(max-height:720px){.exercise-sheet{height:calc(100dvh - 15px)}.exercise-top{min-height:66px}.exercise-stage{aspect-ratio:10/5.9}.exercise-demo-name{margin-top:10px}.exercise-next{min-height:52px}}
+@media(max-width:365px){.exercise-row{min-height:74px}.exercise-label strong{font-size:21px}.exercise-stage{aspect-ratio:10/6.5}.exercise-demo-name{font-size:29px}}
+@media(prefers-reduced-motion:reduce){.pulse-dot{box-shadow:none}}
+</style>
+</head>
+<body>
+<div class="app">
+<header>
+  <h1>3SET</h1>
+  <button class="bell" id="bell" aria-label="운동 알림 설정" title="운동 알림 설정">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg>
+  </button>
+</header>
+<main>
+  <section class="hero" id="hero" data-state="none" aria-live="polite">
+    <svg class="character" viewBox="0 0 320 285" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="운동 상태에 따라 표정과 색이 변하는 캐릭터">
+      <ellipse class="halo" cx="160" cy="145" rx="146" ry="132"/>
+      <ellipse class="aura" cx="160" cy="145" rx="143" ry="129" fill="none" stroke-width="2" stroke-dasharray="8 13"/>
+      <!-- Helmet-like ears and bold, unique mascot silhouette -->
+      <path class="face" d="M70 77 C47 56 42 43 42 25 C66 32 86 42 104 53 C122 43 141 40 160 40 C180 40 199 43 217 53 C234 42 254 32 278 25 C278 45 273 60 250 78 C267 97 276 119 276 149 C276 223 225 263 160 263 C95 263 44 223 44 149 C44 118 53 94 70 77 Z"/>
+      <path d="M84 82 Q160 49 237 82" fill="none" stroke="#fff" stroke-opacity=".18" stroke-width="10" stroke-linecap="round"/>
+      <g class="brow brow-none"><path d="M103 124 L137 131"/><path d="M183 131 L217 124"/></g>
+      <g class="brow brow-partial"><path d="M103 120 L137 131"/><path d="M183 123 L217 123"/></g>
+      <g class="brow brow-done"><path d="M105 129 Q123 118 138 129"/><path d="M182 129 Q199 118 215 129"/></g>
+      <ellipse class="eye" cx="123" cy="157" rx="12" ry="16"/>
+      <ellipse class="eye" cx="198" cy="157" rx="12" ry="16"/>
+      <circle class="shine" cx="126" cy="152" r="3"/><circle class="shine" cx="201" cy="152" r="3"/>
+      <path class="mouth mouth-none" d="M136 210 L184 210"/>
+      <path class="mouth mouth-partial" d="M137 212 Q159 202 182 214"/>
+      <path class="mouth mouth-done" d="M119 197 Q160 252 202 197"/>
+      <ellipse class="cheek" cx="89" cy="189" rx="15" ry="7" opacity=".3"/><ellipse class="cheek" cx="231" cy="189" rx="15" ry="7" opacity=".3"/>
+    </svg>
+    <p class="status" id="status">아직 안 했어.</p>
+    <p class="subtitle" id="subtitle">오늘도 보고 있다.</p>
+  </section>
+  <section class="check" id="check" data-state="none" aria-label="오늘 운동 세트 체크">
+    <div class="section-head"><h2>오늘 몇 세트?</h2><div class="count" id="count">0 <span>/ 3</span></div></div>
+    <div class="set-grid" id="sets">
+      <button type="button" class="set-btn" data-set="1">1세트<span class="checkmark">✓</span></button>
+      <button type="button" class="set-btn" data-set="2">2세트<span class="checkmark">✓</span></button>
+      <button type="button" class="set-btn" data-set="3">3세트<span class="checkmark">✓</span></button>
+    </div>
+    <button class="exercise-entry" type="button" id="exerciseEntry" aria-haspopup="dialog" aria-controls="exerciseOverlay"><span>1세트 운동 보기</span><span class="entry-end">5가지 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg></span></button>
+  </section>
+  <section class="calendar-card" aria-label="운동한 날 달력">
+    <div class="calendar-head">
+      <h2>운동 달력</h2>
+      <div class="month-controls">
+        <button class="month-btn" id="prev" aria-label="이전 달"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="m15 5-7 7 7 7"/></svg></button>
+        <span id="monthText">11월</span>
+        <button class="month-btn" id="next" aria-label="다음 달"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="m9 5 7 7-7 7"/></svg></button>
+      </div>
+    </div>
+    <div class="weekdays" aria-hidden="true"><div>일</div><div>월</div><div>화</div><div>수</div><div>목</div><div>금</div><div>토</div></div>
+    <div class="days" id="days"></div>
+    <div class="legend"><span><i class="dot"></i> 3세트 완료</span><span><i class="dot partial"></i> 덜 완료</span></div>
+  </section>
+</main>
+</div>
+<div class="overlay" id="overlay" role="presentation">
+ <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+  <div class="sheet-top"><h2 id="sheetTitle">독촉 알림 🔔</h2><button class="close" id="close" aria-label="닫기">×</button></div>
+  <div class="switch-line"><span>매일 잔소리하기</span><button id="notifSwitch" class="switch" role="switch" aria-checked="false" aria-label="알림 켜기 또는 끄기"></button></div>
+  <div class="time-row">
+   <div><label for="time1">1차 독촉</label><input id="time1" type="time" value="19:00"></div>
+   <div><label for="time2">2차 독촉</label><input id="time2" type="time" value="20:30"></div>
+   <div><label for="time3">마지막</label><input id="time3" type="time" value="22:00"></div>
+  </div>
+  <button id="testNotif" class="big-btn">알림 테스트</button>
+  <p class="notice" id="platformNotice">웹에서는 화면이 열려 있을 때만 알림이 작동해. 갤럭시 설치 앱에서는 종료 후에도 알림을 예약할 수 있어.</p>
+ </div>
+</div>
+
+<div class="exercise-overlay" id="exerciseOverlay" aria-hidden="true">
+  <div class="exercise-sheet" role="dialog" aria-modal="true" aria-labelledby="exerciseTitle">
+    <div class="exercise-top">
+      <button class="exercise-back" id="exerciseBack" type="button" aria-label="운동 목록으로 돌아가기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="m15 5-7 7 7 7"/></svg></button>
+      <h2 class="exercise-title" id="exerciseTitle">1세트 운동</h2>
+      <button class="exercise-close" type="button" id="exerciseClose" aria-label="운동 보기 닫기">×</button>
+    </div>
+    <div class="exercise-list" id="exerciseList"></div>
+    <div class="exercise-detail" id="exerciseDetail">
+      <div class="exercise-counter" id="exerciseCounter">1 / 5</div>
+      <div class="exercise-stage">
+        <canvas id="exerciseCanvas" width="1200" height="840" role="img" aria-label="운동 자세를 반복해서 보여주는 만화풍 움직임 안내"></canvas>
+        <div class="exercise-animation-tag"><i class="pulse-dot"></i> 움직임 보기</div>
+      </div>
+      <h3 class="exercise-demo-name" id="exerciseName"></h3>
+      <p class="exercise-demo-reps" id="exerciseReps"></p>
+      <p class="exercise-tip" id="exerciseTip"></p>
+      <button class="exercise-next" type="button" id="exerciseNext">다음 운동 →</button>
+    </div>
+  </div>
+</div>
+<div class="toast" role="status" id="toast" aria-live="polite"></div>
+<script>
+(()=>{'use strict';
+const KEY='haennya-simple-v1'; const OLD='haennya-workout-v1';
+const $=id=>document.getElementById(id);
+const clamp=n=>Math.max(0,Math.min(3,Number(n)||0));
+const dateKey=(d=new Date())=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+const fresh=()=>({days:{},notify:false,times:['19:00','20:30','22:00']});
+function load(){try{
+let saved=null;
+if(window.AndroidBridge&&typeof window.AndroidBridge.readState==='function'){
+  try{saved=window.AndroidBridge.readState();}catch(_ignored){}
+}
+let v=JSON.parse(saved||localStorage.getItem(KEY));if(v&&typeof v==='object'){return {days:(v.days&&typeof v.days==='object')?v.days:{},notify:!!v.notify,times:Array.isArray(v.times)&&v.times.length===3?v.times:['19:00','20:30','22:00']}};}catch(e){};
+// Preserve any existing completed round records from the previous version when available.
+let s=fresh();try{const prior=JSON.parse(localStorage.getItem(OLD));if(prior&&prior.days){for(const [date,day] of Object.entries(prior.days)){if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||day.rest)continue;let n=0;for(const round of day.rounds||[]){if(['squat','pushup','climber','legraise','plank'].every(id=>round?.[id]))n++;}if(n)s.days[date]=clamp(n);}s.notify=!!prior.settings?.notices;}}catch(e){}
+return s;}
+let state=load();const today=dateKey();let showing=new Date().getFullYear()*12+new Date().getMonth();let toastTimer=null;
+function save(){const serialized=JSON.stringify(state);
+try{localStorage.setItem(KEY,serialized);}catch(e){toast('저장 공간을 확인해 줘');}
+if(window.AndroidBridge&&typeof window.AndroidBridge.writeState==='function'){
+ try{window.AndroidBridge.writeState(serialized);}catch(_ignored){}
+}
+syncNative();}
+function count(){return clamp(state.days[dateKey()]);}
+function currentState(){return count()===3?'done':count()>0?'partial':'none'}
+function renderHero(){let n=count(),kind=currentState();$('hero').dataset.state=kind;$('check').dataset.state=kind;$('count').innerHTML=`${n} <span>/ 3</span>`;
+const labels=n===0?['아직 안 했어.','오늘도 보고 있다.']:n===1?['흠…','아직 2세트 남았다.']:n===2?['흠…','이제 1세트 남았다.']:['다 했다!','오늘은 인정. 😁'];
+$('status').textContent=labels[0];$('subtitle').textContent=labels[1];
+document.querySelectorAll('[data-set]').forEach(btn=>{let on=Number(btn.dataset.set)<=n;btn.classList.toggle('chosen',on);btn.setAttribute('aria-pressed',String(on));});}
+function renderCalendar(){const now=new Date(),year=Math.floor(showing/12),month=showing%12;
+$('monthText').textContent=year===now.getFullYear()?`${month+1}월`:`${year}년 ${month+1}월`;
+$('next').disabled=showing>=now.getFullYear()*12+now.getMonth();
+const start=new Date(year,month,1).getDay(),end=new Date(year,month+1,0).getDate();let html='';
+for(let i=0;i<start;i++)html+='<div class="day blank"></div>';
+for(let d=1;d<=end;d++){const k=dateKey(new Date(year,month,d,12)),n=clamp(state.days[k]);let klass=`day ${n===3?'done':n>0?'partial':''} ${k===dateKey()?'today':''} ${k>dateKey()?'future':''}`;html+=`<div class="${klass.trim()}" title="${k}: ${n}세트" aria-label="${year}년 ${month+1}월 ${d}일, ${n}세트">${d}</div>`;}
+$('days').innerHTML=html;}
+function render(){renderHero();renderCalendar();$('bell').classList.toggle('is-on',state.notify);$('notifSwitch').classList.toggle('on',state.notify);$('notifSwitch').setAttribute('aria-checked',String(state.notify));state.times.forEach((v,i)=>$('time'+(i+1)).value=v);$('platformNotice').textContent=window.AndroidBridge?'앱을 꺼도 알림을 예약해. 3세트를 완료하면 그날은 조용해져.':'웹 체험판은 열려 있을 때만 알림을 보낼 수 있어. 앱 종료 후에도 독촉하려면 Android 설치 앱이 필요해.';}
+function choose(n){n=clamp(n);const old=count();const next=old===n?n-1:n;if(next>0)state.days[dateKey()]=next;else delete state.days[dateKey()];save();render();if(next===3&&old!==3)toast('오늘 운동 완료!');}
+function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),2500);}
+function syncNative(){if(!window.AndroidBridge?.syncReminders)return;try{window.AndroidBridge.syncReminders(JSON.stringify({enabled:state.notify,slots:state.times,nag:'spicy',completedDate:count()===3?dateKey():'',countDate:dateKey(),doneCount:count(),restDate:''}));}catch(e){}}
+function openSettings(open){$('overlay').classList.toggle('open',open);document.body.style.overflow=open?'hidden':'';if(open)$('close').focus();else $('bell').focus();}
+async function toggleNotify(){state.notify=!state.notify;if(state.notify&&window.AndroidBridge?.requestNotificationPermission){window.AndroidBridge.requestNotificationPermission();}else if(state.notify&&'Notification' in window&&window.isSecureContext&&Notification.permission==='default'){try{await Notification.requestPermission();}catch(e){}}save();render();toast(state.notify?'독촉 알림 켰어':'독촉 알림 껐어');}
+const messages=['했냐? 아직 3세트 남았다.','했냐? 아직도 미완료야.','했냐? 오늘 끝내고 자자.'];
+function sendWebNotification(index){if(!state.notify||count()===3||window.AndroidBridge)return;if(!('Notification' in window)||!window.isSecureContext||Notification.permission!=='granted')return;try{new Notification('3SET',{body:messages[index]||messages[0],tag:'haennya-'+dateKey()+'-'+index});}catch(e){}}
+function webTick(){if(window.AndroidBridge||!state.notify||count()===3)return;const now=new Date(),hhmm=`${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;state.times.forEach((time,i)=>{let key='haennya-last-'+dateKey()+'-'+i;if(time===hhmm&&localStorage.getItem('haennya-last-notify')!==key){localStorage.setItem('haennya-last-notify',key);sendWebNotification(i);}});}
+$('sets').addEventListener('click',e=>{const btn=e.target.closest('[data-set]');if(btn)choose(btn.dataset.set)});
+$('prev').addEventListener('click',()=>{showing--;renderCalendar();});$('next').addEventListener('click',()=>{const n=new Date();showing=Math.min(showing+1,n.getFullYear()*12+n.getMonth());renderCalendar();});
+$('bell').addEventListener('click',()=>openSettings(true));$('close').addEventListener('click',()=>openSettings(false));$('overlay').addEventListener('click',e=>{if(e.target===$('overlay'))openSettings(false)});document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('overlay').classList.contains('open'))openSettings(false)});
+$('notifSwitch').addEventListener('click',toggleNotify);
+state.times.forEach((t,i)=>$('time'+(i+1)).addEventListener('change',e=>{let v=e.target.value;if(!/^([01]\d|2[0-3]):[0-5]\d$/.test(v))return;state.times[i]=v;save();toast('알림 시간 저장했어');}));
+$('testNotif').addEventListener('click',async()=>{if(window.AndroidBridge?.showTestNotification){window.AndroidBridge.showTestNotification();return;}if(!('Notification' in window)||!window.isSecureContext){toast('웹 알림은 HTTPS에서만 테스트 가능');return;}let permission=Notification.permission;if(permission!=='granted')permission=await Notification.requestPermission();if(permission==='granted'){new Notification('3SET',{body:'이게 테스트야. 오늘 3세트 했냐?'});toast('테스트 알림 보냈어');}else toast('알림 권한을 허용해 줘');});
+window.addEventListener('focus',()=>{const n=new Date();if(dateKey()!==today){showing=n.getFullYear()*12+n.getMonth()}render();webTick()});
+render();save();setInterval(webTick,30000);
+// Hosted pages can refresh in place without a fresh APK installation.
+const SITE_BUILD='2026.11.23.2';let lastUpdateCheck=0;
+async function checkForSiteUpdate(){
+ if(location.protocol!=='https:' || !navigator.onLine || document.hidden)return;
+ if(Date.now()-lastUpdateCheck<60000)return;
+ lastUpdateCheck=Date.now();
+ try{const r=await fetch('./version.json?t='+Date.now(),{cache:'no-store'});
+   if(!r.ok)return;const info=await r.json();
+   if(info.version && info.version!==SITE_BUILD){
+     const next=new URL('./index.html',location.href);next.searchParams.set('v',info.version);
+     location.replace(next.href);
+   }
+ }catch(_ignored){}
+}
+setTimeout(checkForSiteUpdate,3000);
+setInterval(checkForSiteUpdate,300000);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)checkForSiteUpdate();});if('serviceWorker' in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('./sw.js').catch(()=>{});
+})();
+</script>
+
+<script>
+/* Self-contained, resolution-independent animated exercise coach. No network or video needed. */
+(()=>{'use strict';
+const workouts=[
+ {key:'squat',name:'스쿼트',reps:'30회',tip:'엉덩이를 뒤로 빼고 일어나기'},
+ {key:'pushup',name:'푸시업',reps:'20회',tip:'몸을 일직선으로, 가슴 내리기'},
+ {key:'climber',name:'마운틴 클라이머',reps:'40회',tip:'무릎을 가슴 쪽으로 번갈아 당기기'},
+ {key:'legraise',name:'레그 레이즈',reps:'25회',tip:'허리를 뜨지 않게, 두 다리 올리기'},
+ {key:'plank',name:'플랭크',reps:'1분',tip:'팔꿈치로 버티고 몸 일직선 유지'}
+];
+const $=id=>document.getElementById(id);
+const overlay=$('exerciseOverlay'), list=$('exerciseList'),detail=$('exerciseDetail'), back=$('exerciseBack'),canvas=$('exerciseCanvas'),ctx=canvas.getContext('2d');
+let selected=-1,raf=0,started=0,lastActive=null;
+const reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const fmt=(([x,y])=>({x,y}));
+const mix=(a,b,t)=>[a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t];
+const pose=(a,b,t)=>Object.fromEntries(Object.keys(a).map(k=>[k,mix(a[k],b[k]||a[k],t)]));
+const v=(x,y)=>[x,y];
+const skin='#efb692', skinShade='#d49a7c', top='#f35e68', pants='#3c4658', shoe='#f0f1ef', trim='#12151e';
+function line(a,b,width,color){ctx.beginPath();ctx.lineCap='round';ctx.lineJoin='round';ctx.strokeStyle=trim;ctx.lineWidth=width+6;ctx.moveTo(...a);ctx.lineTo(...b);ctx.stroke();ctx.strokeStyle=color;ctx.lineWidth=width;ctx.beginPath();ctx.moveTo(...a);ctx.lineTo(...b);ctx.stroke();}
+function joint(a,r,color){ctx.fillStyle=trim;ctx.beginPath();ctx.arc(a[0],a[1],r+3,0,Math.PI*2);ctx.fill();ctx.fillStyle=color;ctx.beginPath();ctx.arc(a[0],a[1],r,0,Math.PI*2);ctx.fill();}
+function pair(p,dx,dy){return [p[0]+dx,p[1]+dy]}
+function drawFigure(p,mode){
+ const floor=244;
+ ctx.strokeStyle='#383a45';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(27,floor+9);ctx.lineTo(377,floor+9);ctx.stroke();
+ ctx.fillStyle='#252832';ctx.beginPath();ctx.ellipse(mode==='squat'?204:230,249,mode==='squat'?90:155,7,0,0,Math.PI*2);ctx.fill();
+ // The farther leg sits behind the near leg for depth.
+ if(mode==='squat'){
+   let hip2=pair(p.hip,-12,2),knee2=pair(p.knee,-16,2),ankle2=pair(p.ankle,-18,0);
+   line(hip2,knee2,21,'#293244');line(knee2,ankle2,13,skinShade);line(ankle2,pair(ankle2,25,3),10,'#ccd0d7');
+   line(p.shoulder,p.elbow,17,skinShade);line(p.elbow,p.wrist,14,skinShade);
+   line(p.hip,p.knee,25,pants);line(p.knee,p.ankle,16,skin);line(p.ankle,pair(p.ankle,29,4),13,shoe);
+   line(p.hip,p.shoulder,37,top);
+   joint(p.shoulder,14,top);line(p.shoulder,p.elbow,16,skin);line(p.elbow,p.wrist,13,skin);joint(p.wrist,7,skin);
+ }else if(mode==='legraise'){
+   let ankle2=pair(p.ankle,4,7),knee2=pair(p.knee,6,6);
+   line(pair(p.hip,0,7),knee2,22,'#2a3547');line(knee2,ankle2,15,skinShade);line(ankle2,pair(ankle2,17,-1),10,'#d7dde4');
+   line(p.shoulder,p.elbow,16,skinShade);line(p.elbow,p.wrist,13,skinShade);
+   line(p.hip,p.knee,23,pants);line(p.knee,p.ankle,16,skin);line(p.ankle,pair(p.ankle,19,-2),11,shoe);
+   line(p.hip,p.shoulder,32,top);joint(p.shoulder,11,top);
+ }else{
+   // Plank family: foot and one or two bent legs; left is head side.
+   let frontKnee=p.knee,frontAnkle=p.ankle;
+   const backKnee=p.backKnee||pair(p.knee,3,7),backAnkle=p.backAnkle||pair(p.ankle,4,6);
+   line(p.hip,backKnee,22,'#293244');line(backKnee,backAnkle,14,skinShade);line(backAnkle,pair(backAnkle,12,2),10,'#bfc6cf');
+   line(p.shoulder,p.elbow,19,skinShade);line(p.elbow,p.wrist,14,skinShade);
+   line(p.hip,frontKnee,23,pants);line(frontKnee,frontAnkle,15,skin);line(frontAnkle,pair(frontAnkle,12,2),11,shoe);
+   line(p.hip,p.shoulder,36,top);joint(p.shoulder,13,top);
+   line(p.shoulder,p.elbow,16,skin);line(p.elbow,p.wrist,14,skin);joint(p.wrist,7,skin);
+ }
+ // Profile head, crisp hair silhouette and face, fully custom illustrated.
+ let head=p.head;let neck= mode==='legraise'?pair(head,17,8):mode==='squat'?pair(head,9,18):pair(head,17,4);
+ line(p.shoulder,neck,14,skin);
+ joint(head,20,skin);
+ ctx.fillStyle='#171b25';ctx.beginPath();ctx.ellipse(head[0]-3,head[1]-12,19,11,-0.20,Math.PI,Math.PI*2);ctx.fill();
+ ctx.beginPath();ctx.arc(head[0]-15,head[1]-8,7,0,Math.PI*2);ctx.fill();
+ ctx.fillStyle='#20242e';ctx.beginPath();ctx.arc(head[0]+(mode==='squat'?8:-9),head[1]+2,2.5,0,Math.PI*2);ctx.fill();
+ ctx.strokeStyle=skinShade;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(head[0]+(mode==='squat'?15:-16),head[1]+12);ctx.lineTo(head[0]+(mode==='squat'?9:-10),head[1]+13);ctx.stroke();
+}
+function drawArrows(mode){
+ ctx.save();ctx.strokeStyle='rgba(255,102,114,.73)';ctx.lineWidth=3;ctx.lineCap='round';ctx.lineJoin='round';
+ // A spare motion cue, deliberately not dense with labels.
+ if(mode==='squat'){
+  ctx.beginPath();ctx.arc(280,147,30,-.9,.8);ctx.stroke();ctx.beginPath();ctx.moveTo(297,165);ctx.lineTo(302,172);ctx.lineTo(309,163);ctx.stroke();
+ }else if(mode==='legraise'){
+  ctx.beginPath();ctx.arc(277,116,29,-1.6,.4);ctx.stroke();ctx.beginPath();ctx.moveTo(304,122);ctx.lineTo(303,131);ctx.lineTo(313,126);ctx.stroke();
+ }else if(mode==='climber'){
+  ctx.beginPath();ctx.moveTo(260,229);ctx.lineTo(235,207);ctx.lineTo(241,209);ctx.moveTo(235,207);ctx.lineTo(238,217);ctx.stroke();
+ }else if(mode==='pushup'){
+  ctx.beginPath();ctx.moveTo(75,177);ctx.lineTo(75,211);ctx.moveTo(69,204);ctx.lineTo(75,211);ctx.lineTo(81,204);ctx.stroke();
+ }
+ ctx.restore();
+}
+const A={
+ squat:{head:v(166,65),shoulder:v(175,97),hip:v(173,161),knee:v(191,197),ankle:v(191,237),elbow:v(216,119),wrist:v(221,141)},
+ pushup:{head:v(100,157),shoulder:v(143,173),hip:v(223,180),knee:v(281,205),ankle:v(328,236),elbow:v(149,207),wrist:v(153,237)},
+ climber:{head:v(101,153),shoulder:v(140,170),hip:v(225,178),knee:v(190,214),ankle:v(216,240),backKnee:v(275,198),backAnkle:v(334,237),elbow:v(146,207),wrist:v(151,238)},
+ legraise:{head:v(63,215),shoulder:v(100,215),hip:v(178,210),knee:v(251,216),ankle:v(321,218),elbow:v(117,225),wrist:v(149,235)},
+ plank:{head:v(101,161),shoulder:v(143,177),hip:v(229,177),knee:v(289,199),ankle:v(335,237),elbow:v(140,217),wrist:v(185,236)}
+};
+const B={
+ squat:{head:v(141,100),shoulder:v(149,128),hip:v(135,186),knee:v(193,201),ankle:v(191,237),elbow:v(194,143),wrist:v(211,151)},
+ pushup:{head:v(100,202),shoulder:v(141,214),hip:v(225,204),knee:v(286,220),ankle:v(328,236),elbow:v(129,226),wrist:v(153,237)},
+ climber:{head:v(101,153),shoulder:v(140,170),hip:v(225,178),knee:v(275,198),ankle:v(334,237),backKnee:v(188,213),backAnkle:v(217,239),elbow:v(146,207),wrist:v(151,238)},
+ legraise:{head:v(63,215),shoulder:v(100,215),hip:v(178,210),knee:v(179,136),ankle:v(170,63),elbow:v(117,225),wrist:v(149,235)},
+ plank:{head:v(100,162),shoulder:v(143,174),hip:v(229,175),knee:v(289,197),ankle:v(335,237),elbow:v(140,217),wrist:v(185,236)}
+};
+function drawFrame(time){
+ if(selected<0||!ctx)return;
+ const mode=workouts[selected].key;
+ let t=reduce? .45 : (1-Math.cos((time-started)*(mode==='climber'?.0045:mode==='plank'?.0014:.0027)))/2;
+ if(mode==='plank')t=t*.6;
+ let p=pose(A[mode],B[mode],t);
+ ctx.setTransform(3,0,0,3,0,0);ctx.clearRect(0,0,400,280);
+ const grad=ctx.createRadialGradient(210,120,15,210,130,200);grad.addColorStop(0,'#1b1b27');grad.addColorStop(1,'#10121a');ctx.fillStyle=grad;ctx.fillRect(0,0,400,280);
+ ctx.strokeStyle='#272932';ctx.lineWidth=.85;for(let x=20;x<400;x+=34){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,280);ctx.stroke()}for(let y=16;y<280;y+=34){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(400,y);ctx.stroke()}
+ ctx.fillStyle='rgba(255,92,103,.07)';ctx.beginPath();ctx.arc(204,135,94,0,Math.PI*2);ctx.fill();
+ drawArrows(mode);drawFigure(p,mode);
+ if(!reduce)raf=requestAnimationFrame(drawFrame);
+}
+function stop(){cancelAnimationFrame(raf);raf=0}
+function start(){stop();started=performance.now();raf=requestAnimationFrame(drawFrame)}
+function showList(){stop();selected=-1;list.style.display='block';detail.classList.remove('visible');back.classList.remove('visible');$('exerciseTitle').textContent='1세트 운동';list.innerHTML=workouts.map((w,i)=>`<button type="button" class="exercise-row" data-exercise="${i}"><span class="exercise-num">${i+1}</span><span class="exercise-label"><strong>${w.name}</strong><em>${w.reps}</em></span><span class="exercise-chevron" aria-hidden="true">›</span></button>`).join('');}
+function showDetail(i){selected=Math.min(Math.max(i,0),workouts.length-1);const w=workouts[selected];list.style.display='none';detail.classList.add('visible');back.classList.add('visible');$('exerciseTitle').textContent='운동 방법';$('exerciseCounter').textContent=`${selected+1} / ${workouts.length}`;$('exerciseName').textContent=w.name;$('exerciseReps').textContent=w.reps;$('exerciseTip').textContent=w.tip;$('exerciseNext').textContent=selected===workouts.length-1?'목록으로':'다음 운동 →';canvas.setAttribute('aria-label',`${w.name} 동작을 반복해서 보여주는 일러스트 애니메이션`);start();}
+function openGuide(){lastActive=document.activeElement;overlay.classList.add('open');overlay.setAttribute('aria-hidden','false');document.body.style.overflow='hidden';showList();$('exerciseClose').focus();}
+function closeGuide(){stop();overlay.classList.remove('open');overlay.setAttribute('aria-hidden','true');document.body.style.overflow='';selected=-1;lastActive?.focus?.();}
+$('exerciseEntry').addEventListener('click',openGuide);
+$('exerciseClose').addEventListener('click',closeGuide);
+back.addEventListener('click',()=>{showList();$('exerciseClose').focus()});
+list.addEventListener('click',e=>{const button=e.target.closest('[data-exercise]');if(button)showDetail(Number(button.dataset.exercise))});
+$('exerciseNext').addEventListener('click',()=>{if(selected===workouts.length-1)showList();else showDetail(selected+1)});
+overlay.addEventListener('click',e=>{if(e.target===overlay)closeGuide()});
+document.addEventListener('keydown',e=>{if(!overlay.classList.contains('open'))return;if(e.key==='Escape'){e.preventDefault();selected>=0?showList():closeGuide()}if(e.key==='Tab'){const focusables=[...overlay.querySelectorAll('button:not([disabled])')].filter(el=>el.offsetParent!==null);const i=focusables.indexOf(document.activeElement);if(e.shiftKey&&i===0){e.preventDefault();focusables.at(-1).focus()}else if(!e.shiftKey&&i===focusables.length-1){e.preventDefault();focusables[0].focus()}}});
+})();
+</script>
+</body>
+</html>
