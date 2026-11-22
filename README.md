@@ -28,3 +28,11 @@ Private workout history stays on-device. The web display uses a fixed origin rat
 - An inexact midnight AlarmManager event, app resume, device boot and time change keep the icon current; Android power saving may delay the scheduled change. Galaxy launcher caches/placement may vary.
 - Launcher icon switching is a native change, therefore this version requires a newly built APK. Future character movement and guide adjustments can be delivered via web when Pages is enabled.
 - Debug APKs from distinct GitHub Actions runners may have different signing keys. Backup workout history before replacing an already installed debug build; never promise a seamless in-place update until signing has been stabilized.
+
+
+## Launcher mascot status (v3.1.1)
+
+- 0 rounds: red neutral face (`LauncherDefault`)
+- 1–2 rounds: yellow thinking face (`LauncherPartial`)
+- 3 rounds: green restrained smile (`LauncherDone`)
+- State is read from the existing local daily record; transitions include manual corrections and the next-day reset. On Android launchers, alias switching may temporarily rearrange shortcuts or delay icon refresh. This is a native APK change requiring a reinstall/update.
