@@ -100,6 +100,21 @@ header{display:flex;align-items:center;justify-content:space-between;padding-top
  .guide-panel.finish{opacity:0}
 }
 
+
+/* Xiao Xiao-style stick figure instruction cards: static anatomically placed SVGs, no joints tweened. */
+.exercise-stage{background:radial-gradient(circle at 50% 35%,#f5f5f3 0%,#e6e6e1 100%);border-color:#c8c9c7}
+.exercise-stage .pose-visual{position:absolute;inset:0;width:100%;height:100%;overflow:hidden}
+.exercise-animation-tag{background:#15191d;color:#f6f6f3}
+.guide-panel{position:absolute;inset:0;opacity:0;display:flex;align-items:center;justify-content:center}
+.guide-panel svg{width:100%;height:100%;display:block;overflow:visible}
+.guide-panel.pose-a{animation:guidePoseA 5s steps(1,end) infinite}
+.guide-panel.pose-b{animation:guidePoseB 5s steps(1,end) infinite}
+.guide-panel.pose-static{opacity:1}
+@keyframes guidePoseA{0%,48%{opacity:1}50%,98%{opacity:0}100%{opacity:1}}
+@keyframes guidePoseB{0%,48%{opacity:0}50%,98%{opacity:1}100%{opacity:0}}
+.guide-pose-label{position:absolute;bottom:13px;right:13px;font-size:14px;font-weight:850;border-radius:10px;background:#13171ee8;color:#fff;padding:8px 12px}
+@media(prefers-reduced-motion:reduce){.guide-panel.pose-a,.guide-panel.pose-b{animation:none!important}.guide-panel.pose-a{opacity:1}.guide-panel.pose-b{opacity:0}}
+
 </style>
 </head>
 <body>
@@ -199,7 +214,7 @@ header{display:flex;align-items:center;justify-content:space-between;padding-top
     <div class="exercise-detail" id="exerciseDetail">
       <div class="exercise-counter" id="exerciseCounter">1 / 5</div>
       <div class="exercise-stage">
-        <div id="exerciseCanvas" class="pose-visual" role="img" aria-label="운동 자세 시작과 동작을 번갈아 보여주는 고정 일러스트"></div>
+        <div id="exerciseCanvas" class="pose-visual" role="img" aria-label="정면 운동 자세를 보여주는 간결한 스틱 피규어 가이드"></div>
         <div class="exercise-animation-tag"><i class="pulse-dot"></i> 자세 순서</div>
       </div>
       <h3 class="exercise-demo-name" id="exerciseName"></h3>
@@ -325,7 +340,7 @@ $('testNotif').addEventListener('click',async()=>{if(window.AndroidBridge?.showT
 window.addEventListener('focus',()=>{const n=new Date();if(dateKey()!==today){showing=n.getFullYear()*12+n.getMonth()}render();webTick()});
 render();save();setInterval(webTick,30000);
 // Hosted pages can refresh in place without a fresh APK installation.
-const SITE_BUILD='2026.11.23.8';let lastUpdateCheck=0;
+const SITE_BUILD='2026.11.23.9';let lastUpdateCheck=0;
 async function checkForSiteUpdate(){
  if(location.protocol!=='https:' || !navigator.onLine || document.hidden)return;
  if(Date.now()-lastUpdateCheck<60000)return;
@@ -345,107 +360,69 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)checkForSi
 </script>
 
 <script>
-/* Redesigned exercise guide: two independent, hand-composed flat illustrations.
-   No skeletal interpolation, mesh warping, canvas rendering, or artificial joints. */
+/* 3SET stick-figure workout guide: independently composed SVG poses, never interpolated joints. */
 (()=>{'use strict';
 const workouts=[
- {key:'squat',name:'스쿼트',reps:'30회',tip:'발바닥 전체로 지탱하며 엉덩이를 뒤·아래로 내리기'},
- {key:'pushup',name:'푸시업',reps:'20회',tip:'배에 힘 주고 어깨·엉덩이·발뒤꿈치를 일직선으로 유지'},
- {key:'climber',name:'마운틴 클라이머',reps:'40회',tip:'손은 어깨 아래, 허리를 고정하고 무릎 번갈아 당기기'},
- {key:'legraise',name:'레그 레이즈',reps:'25회',tip:'허리가 뜨지 않는 범위까지만 두 다리를 내리기'},
- {key:'plank',name:'플랭크',reps:'1분',tip:'팔꿈치는 어깨 아래, 머리부터 발뒤꿈치까지 일직선'}
+ {key:'squat',name:'스쿼트',reps:'30회',tip:'발바닥 전체로 버티고 엉덩이를 뒤·아래로 내려가세요.'},
+ {key:'pushup',name:'푸시업',reps:'20회',tip:'손은 어깨 아래, 머리부터 발뒤꿈치까지 일직선을 유지하세요.'},
+ {key:'climber',name:'마운틴 클라이머',reps:'40회',tip:'상체는 고정하고 무릎을 가슴 쪽으로 번갈아 당기세요.'},
+ {key:'legraise',name:'레그 레이즈',reps:'25회',tip:'천장을 보고 바로 누워, 허리가 뜨지 않게 두 다리를 함께 올리세요.'},
+ {key:'plank',name:'플랭크',reps:'1분',tip:'팔꿈치는 어깨 바로 아래, 팔뚝과 손은 머리 방향으로 두고 몸을 곧게 유지하세요.'}
 ];
-const $=id=>document.getElementById(id);
-const overlay=$('exerciseOverlay'),list=$('exerciseList'),detail=$('exerciseDetail'),
- back=$('exerciseBack'),stage=$('exerciseCanvas');
-let selected=-1,lastActive=null;
-const pt=(x,y)=>[x,y];
-/* All landmark positions are static: each is a complete illustration, not an animation keyframe. */
-const fixed={
+/* Full non-interpolated coordinates for the minimalist flash-era stick figures. */
+const poses={
  squat:[
-  {name:'시작 자세',head:pt(177,52),shoulder:pt(178,95),hip:pt(177,147),
-   knee:pt(188,184),ankle:pt(187,226),backKnee:pt(176,184),backAnkle:pt(176,226),
-   elbow:pt(210,108),hand:pt(235,126),faceRight:true},
-  {name:'엉덩이 뒤로 · 내려가기',head:pt(162,76),shoulder:pt(170,113),hip:pt(143,169),
-   knee:pt(206,181),ankle:pt(187,226),backKnee:pt(195,182),backAnkle:pt(175,226),
-   elbow:pt(214,124),hand:pt(249,131),faceRight:true}
+  {label:'시작 자세',head:[182,51],neck:[184,70],hip:[184,131],knee:[202,180],ankle:[203,226],shoulder:[184,92],elbow:[213,112],hand:[239,125],knee2:[183,179],ankle2:[183,225],face:'right'},
+  {label:'엉덩이 뒤로 · 앉기',head:[167,78],neck:[170,96],hip:[153,165],knee:[210,180],ankle:[203,226],shoulder:[177,115],elbow:[215,123],hand:[239,126],knee2:[195,181],ankle2:[183,225],face:'right'}
  ],
  pushup:[
-  {name:'시작 · 몸 일직선',head:pt(85,153),shoulder:pt(128,155),hip:pt(239,174),
-   knee:pt(294,193),ankle:pt(340,219),backKnee:pt(290,195),backAnkle:pt(335,222),
-   elbow:pt(126,188),hand:pt(123,231),faceRight:false},
-  {name:'가슴 내려가기',head:pt(87,192),shoulder:pt(129,198),hip:pt(240,201),
-   knee:pt(294,213),ankle:pt(340,219),backKnee:pt(290,214),backAnkle:pt(335,222),
-   elbow:pt(125,213),hand:pt(123,231),faceRight:false}
+  {label:'시작 · 일직선',head:[83,155],neck:[102,160],hip:[239,179],knee:[294,202],ankle:[343,226],shoulder:[137,167],elbow:[140,199],hand:[139,230],arm2:[[130,167],[131,201],[130,230]],face:'left'},
+  {label:'가슴 아래로',head:[83,197],neck:[101,202],hip:[239,204],knee:[294,218],ankle:[343,226],shoulder:[137,202],elbow:[138,219],hand:[139,230],arm2:[[130,202],[130,221],[130,230]],face:'left'}
  ],
  climber:[
-  {name:'한쪽 무릎 당기기',head:pt(88,147),shoulder:pt(128,154),hip:pt(236,176),
-   knee:pt(195,209),ankle:pt(226,234),backKnee:pt(291,193),backAnkle:pt(341,219),
-   elbow:pt(129,193),hand:pt(131,233),faceRight:false},
-  {name:'반대쪽 무릎 당기기',head:pt(88,147),shoulder:pt(128,154),hip:pt(236,176),
-   knee:pt(291,193),ankle:pt(341,219),backKnee:pt(195,209),backAnkle:pt(226,234),
-   elbow:pt(129,193),hand:pt(131,233),faceRight:false}
+  {label:'한쪽 무릎 당기기',head:[88,151],neck:[106,157],hip:[237,179],knee:[195,216],ankle:[228,235],knee2:[296,201],ankle2:[343,226],shoulder:[139,169],elbow:[140,202],hand:[140,230],arm2:[[131,169],[130,202],[130,230]],face:'left'},
+  {label:'반대쪽 무릎 당기기',head:[88,151],neck:[106,157],hip:[237,179],knee:[296,201],ankle:[343,226],knee2:[195,216],ankle2:[228,235],shoulder:[139,169],elbow:[140,202],hand:[140,230],arm2:[[131,169],[130,202],[130,230]],face:'left'}
  ],
  legraise:[
-  {name:'시작 · 허리 바닥에',head:pt(80,211),shoulder:pt(120,218),hip:pt(204,216),
-   knee:pt(273,204),ankle:pt(340,200),backKnee:pt(271,210),backAnkle:pt(338,205),
-   elbow:pt(135,227),hand:pt(168,236),faceRight:false},
-  {name:'두 다리 함께 들어 올리기',head:pt(80,211),shoulder:pt(120,218),hip:pt(204,216),
-   knee:pt(235,157),ankle:pt(271,106),backKnee:pt(242,159),backAnkle:pt(278,108),
-   elbow:pt(135,227),hand:pt(168,236),faceRight:false}
+  {label:'천장을 보고 바로 눕기',head:[76,195],neck:[95,205],hip:[204,207],knee:[268,204],ankle:[333,202],knee2:[270,211],ankle2:[335,209],shoulder:[119,206],elbow:[143,218],hand:[167,220],arm2:[[114,209],[136,216],[159,218]],face:'up'},
+  {label:'다리 위로 들어 올리기',head:[76,195],neck:[95,205],hip:[204,207],knee:[209,136],ankle:[212,66],knee2:[218,138],ankle2:[221,69],shoulder:[119,206],elbow:[143,218],hand:[167,220],arm2:[[114,209],[136,216],[159,218]],face:'up'}
  ],
  plank:[
-  {name:'1분 동안 자세 유지',head:pt(87,162),shoulder:pt(129,169),hip:pt(236,177),
-   knee:pt(291,201),ankle:pt(341,223),backKnee:pt(289,205),backAnkle:pt(337,227),
-   elbow:pt(139,218),hand:pt(187,228),faceRight:false}
+  {label:'팔뚝으로 지탱 · 1분',head:[88,158],neck:[108,166],hip:[240,181],knee:[294,202],ankle:[344,228],shoulder:[145,173],elbow:[148,212],hand:[110,215],arm2:[[136,174],[139,217],[103,220]],face:'left'}
  ]
 };
-const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-function limb(a,b,w,fill){
- return `<path d="M${a[0]} ${a[1]} L${b[0]} ${b[1]}" stroke="#10151e" stroke-width="${w+4}" stroke-linecap="round"/><path d="M${a[0]} ${a[1]} L${b[0]} ${b[1]}" stroke="${fill}" stroke-width="${w}" stroke-linecap="round"/>`;
-}
-function leg(hip,knee,ankle,back){
- const pants=back?'#344155':'#53647e',skin=back?'#c59a80':'#efc3a3';
- return limb(hip,knee,back?18:21,pants)+limb(knee,ankle,back?13:15,skin)+
-  limb(ankle,[ankle[0]+17,ankle[1]+2],10,'#e9edf0');
-}
-function staticPortrait(p,mode){
- const ground='<path d="M27 241 H375" stroke="#3c4757" stroke-width="2"/><ellipse cx="214" cy="244" rx="145" ry="6" fill="#202838"/>';
- const farHip=[p.hip[0]-7,p.hip[1]+3],armShade='#cba085';
- const faceSide=p.faceRight?1:-1;
- const hair=`<path d="M${p.head[0]-19} ${p.head[1]-4} Q${p.head[0]-19} ${p.head[1]-22} ${p.head[0]+3} ${p.head[1]-19} Q${p.head[0]+16} ${p.head[1]-19} ${p.head[0]+18} ${p.head[1]-7} Q${p.head[0]} ${p.head[1]-15} ${p.head[0]-19} ${p.head[1]-4} Z" fill="#17202b"/>`;
- const head=`<circle cx="${p.head[0]}" cy="${p.head[1]}" r="19" fill="#eec0a0" stroke="#10151e" stroke-width="3"/>${hair}<circle cx="${p.head[0]+8*faceSide}" cy="${p.head[1]+1}" r="2.3" fill="#1a2028"/>`;
- const arrows={
-  squat:'<path d="M290 103 V175 M280 164 L290 176 L300 164" stroke="#ffcb66" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>',
-  pushup:'<path d="M75 152 V199 M66 188 L75 200 L84 188" stroke="#ffcb66" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>',
-  climber:'<path d="M263 227 L238 204 M238 204 L253 207 M238 204 L241 218" stroke="#ffcb66" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>',
-  legraise:'<path d="M301 169 Q311 127 300 103 M300 103 L293 117 M300 103 L309 117" stroke="#ffcb66" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>',
-  plank:'<path d="M169 102 H270" stroke="#9ce3bb" stroke-width="3" stroke-dasharray="6 6" stroke-linecap="round"/>'
- };
- let arms=limb(p.shoulder,p.elbow,13,armShade)+limb(p.elbow,p.hand,12,'#efc3a3');
- if(mode==='legraise')arms=limb(p.shoulder,p.elbow,13,armShade)+limb(p.elbow,p.hand,12,'#efc3a3');
- const neck=[p.shoulder[0]+(p.faceRight?0:-15),p.shoulder[1]-18];
- return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 260" aria-hidden="true" focusable="false">
-  <rect width="400" height="260" fill="transparent"/>${ground}
-  ${leg(farHip,p.backKnee,p.backAnkle,true)}
-  ${limb(p.hip,p.shoulder,32,'#f26f79')}
-  ${leg(p.hip,p.knee,p.ankle,false)}
-  ${arms}${limb(p.shoulder,neck,12,'#efc3a3')}${head}
-  ${arrows[mode]||''}
- </svg>`;
+const $=id=>document.getElementById(id),overlay=$('exerciseOverlay'),list=$('exerciseList'),detail=$('exerciseDetail'),back=$('exerciseBack'),stage=$('exerciseCanvas');
+let selected=-1,lastActive=null;
+const link=(a,b,w=8,color='#141719')=>'<path d="M'+a.join(' ')+' L'+b.join(' ')+'" fill="none" stroke="'+color+'" stroke-width="'+w+'" stroke-linecap="round" stroke-linejoin="round"/>';
+function frame(mode,p){
+ const floor=mode==='legraise'?'<rect x="48" y="218" width="309" height="20" rx="9" fill="#a3b1c4" opacity=".31"/>':'<path d="M32 236 H367" stroke="#b6bab8" stroke-width="3" stroke-linecap="round"/>';
+ const farLeg=p.knee2?link([p.hip[0]-4,p.hip[1]+3],p.knee2,7,'#72767b')+link(p.knee2,p.ankle2,7,'#72767b'):'';
+ const legs=farLeg+link(p.hip,p.knee,9)+link(p.knee,p.ankle,9)+link(p.ankle,[p.ankle[0]+12,p.ankle[1]+2],7);
+ const torso=link(p.neck,p.hip,10)+link(p.shoulder,p.neck,8);
+ const rearArm=p.arm2?link(p.arm2[0],p.arm2[1],7,'#71767b')+link(p.arm2[1],p.arm2[2],7,'#71767b'):'';
+ const arms=rearArm+link(p.shoulder,p.elbow,9)+link(p.elbow,p.hand,9);
+ const head='<circle cx="'+p.head[0]+'" cy="'+p.head[1]+'" r="17" fill="none" stroke="#141719" stroke-width="7"/>';
+ // When supine, a small nose/eye on top makes the face direction unambiguous.
+ const supine=p.face==='up'?'<circle cx="'+(p.head[0]+2)+'" cy="'+(p.head[1]-13)+'" r="2.6" fill="#141719"/><path d="M'+(p.head[0]+9)+' '+(p.head[1]-12)+' l3 -7" stroke="#141719" stroke-width="3.5" stroke-linecap="round"/>':'';
+ let cue='';
+ if(mode==='squat')cue='<path d="M284 115 v67 m-10 -10 l10 11 10 -11" stroke="#dc594d" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>';
+ if(mode==='pushup')cue='<path d="M73 156 v53 m-9 -10 l9 11 9 -11" stroke="#dc594d" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>';
+ if(mode==='climber')cue='<path d="M268 232 l-24 -23 m15 1 l-15 -1 2 15" stroke="#dc594d" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>';
+ if(mode==='legraise')cue='<path d="M295 182 q21 -38 7 -79 m-9 11 l9 -12 9 11" stroke="#dc594d" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>';
+ if(mode==='plank')cue='<path d="M160 119 h116" stroke="#27875e" stroke-width="4" stroke-dasharray="7 7" stroke-linecap="round"/>';
+ // For supine leg raises, keep both knees in line and make the head face straight upward.
+ return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 260" focusable="false" aria-hidden="true"><rect width="400" height="260" fill="transparent"/>'+floor+legs+torso+arms+head+supine+cue+'</svg>';
 }
 function stop(){stage.replaceChildren();}
 function start(){
- stop();const workout=workouts[selected];if(!workout)return;
- const poses=fixed[workout.key];const single=poses.length===1;
- stage.innerHTML=poses.map((p,i)=>`<div class="guide-panel ${single?'single':i===0?'start':'finish'}">
-   ${staticPortrait(p,workout.key)}
-   <div class="guide-phase-caption">${esc(p.name)}</div>
-  </div>`).join('');
- stage.setAttribute('aria-label',workout.name+': '+poses.map(p=>p.name).join(', '));
+ stop();
+ const w=workouts[selected];if(!w)return;
+ const data=poses[w.key];
+ stage.innerHTML=data.map((p,i)=>'<div class="guide-panel '+(data.length===1?'pose-static':i===0?'pose-a':'pose-b')+'">'+frame(w.key,p)+'<div class="guide-pose-label">'+p.label+'</div></div>').join('');
+ stage.setAttribute('aria-label',w.name+' 자세: '+data.map(p=>p.label).join(' 다음 '));
 }
-function showList(){stop();selected=-1;list.style.display='block';detail.classList.remove('visible');back.classList.remove('visible');$('exerciseTitle').textContent='1세트 운동';list.innerHTML=workouts.map((w,i)=>`<button type="button" class="exercise-row" data-exercise="${i}"><span class="exercise-num">${i+1}</span><span class="exercise-label"><strong>${w.name}</strong><em>${w.reps}</em></span><span class="exercise-chevron" aria-hidden="true">›</span></button>`).join('');}
-function showDetail(i){selected=Math.min(Math.max(i,0),workouts.length-1);const w=workouts[selected];list.style.display='none';detail.classList.add('visible');back.classList.add('visible');$('exerciseTitle').textContent='운동 방법';$('exerciseCounter').textContent=`${selected+1} / ${workouts.length}`;$('exerciseName').textContent=w.name;$('exerciseReps').textContent=w.reps;$('exerciseTip').textContent=w.tip;$('exerciseNext').textContent=selected===workouts.length-1?'목록으로':'다음 운동 →';start();}
+function showList(){stop();selected=-1;list.style.display='block';detail.classList.remove('visible');back.classList.remove('visible');$('exerciseTitle').textContent='1세트 운동';list.innerHTML=workouts.map((w,i)=>'<button type="button" class="exercise-row" data-exercise="'+i+'"><span class="exercise-num">'+(i+1)+'</span><span class="exercise-label"><strong>'+w.name+'</strong><em>'+w.reps+'</em></span><span class="exercise-chevron" aria-hidden="true">›</span></button>').join('');}
+function showDetail(i){selected=Math.min(Math.max(i,0),workouts.length-1);const w=workouts[selected];list.style.display='none';detail.classList.add('visible');back.classList.add('visible');$('exerciseTitle').textContent='운동 방법';$('exerciseCounter').textContent=(selected+1)+' / '+workouts.length;$('exerciseName').textContent=w.name;$('exerciseReps').textContent=w.reps;$('exerciseTip').textContent=w.tip;$('exerciseNext').textContent=selected===workouts.length-1?'목록으로':'다음 운동 →';start();}
 function openGuide(){lastActive=document.activeElement;overlay.classList.add('open');overlay.setAttribute('aria-hidden','false');document.body.style.overflow='hidden';showList();$('exerciseClose').focus();}
 function closeGuide(){stop();overlay.classList.remove('open');overlay.setAttribute('aria-hidden','true');document.body.style.overflow='';selected=-1;lastActive?.focus?.();}
 $('exerciseEntry').addEventListener('click',openGuide);
